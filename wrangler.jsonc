@@ -1,0 +1,34 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "eventcatalog-demo",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-11-01",
+  "observability": { "enabled": true },
+  // EventCatalog runs in `output: 'server'` mode, which is a Node.js SSR server.
+  // Cloudflare Workers cannot run that directly, so the server is packaged with
+  // Dockerfile.server and run on Cloudflare Containers. The Worker in src/worker.js
+  // forwards every request (including the MCP endpoint at /docs/mcp) to the container.
+  "containers": [
+    {
+      "class_name": "EventCatalogContainer",
+      "image": "./Dockerfile.server",
+      "image_build_context": ".",
+      "instance_type": "basic",
+      "max_instances": 1
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "EVENTCATALOG",
+        "class_name": "EventCatalogContainer"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["EventCatalogContainer"]
+    }
+  ]
+}
